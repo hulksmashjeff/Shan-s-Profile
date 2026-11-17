@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shan's Portfolio</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: '#0A0A0A',
+            card: '#111111',
+            cardHover: '#161618',
+            borderSubtle: '#222222',
+            borderHover: '#3A3A3A',
+            mutedText: '#888888',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #0A0A0A;
+      color: #ffffff;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Smooth view transitions */
+    .view-transition {
+      animation: fadeSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Animated equalizer bars for Spotify preview bar */
+    @keyframes eqBounce {
+      0%, 100% { height: 4px; }
+      50% { height: 14px; }
+    }
+    .eq-bar-1 { animation: eqBounce 0.7s ease-in-out infinite; }
+    .eq-bar-2 { animation: eqBounce 0.5s ease-in-out infinite 0.15s; }
+    .eq-bar-3 { animation: eqBounce 0.8s ease-in-out infinite 0.3s; }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0A0A0A;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3f3f46;
+    }
+  </style>
+</head>
+<body class="bg-obsidian text-white min-h-screen selection:bg-white selection:text-black">
+
+  <!-- Main Container -->
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 min-h-screen flex flex-col justify-between">
+    
+    <!-- Dynamic App Mount Point -->
+    <main id="app-root" class="w-full flex-1"></main>
+
+    <!-- Footer -->
+    <footer class="mt-14 pt-6 border-t border-borderSubtle/60 text-center">
+      <p id="footer-tag" class="font-mono text-xs tracking-widest uppercase text-mutedText">
+        ADAM.EXE &copy; 2026
+      </p>
+    </footer>
+  </div>
+
+  <!-- Lightbox Modal for Photography -->
+  <div id="lightbox-modal" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-md flex items-center justify-center p-4 sm:p-8" onclick="closeLightbox(event)">
+    <button onclick="closeLightbox(event, true)" class="absolute top-5 right-5 z-10 p-3 rounded-full bg-card border border-borderSubtle text-white hover:bg-white hover:text-black transition cursor-pointer" aria-label="Close Lightbox">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+
+    <button onclick="navigateLightbox(-1, event)" class="absolute left-3 sm:left-6 z-10 p-3 rounded-full bg-card/90 border border-borderSubtle text-white hover:bg-white hover:text-black transition cursor-pointer" aria-label="Previous Photo">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+
+    <div class="max-w-4xl w-full flex flex-col items-center" onclick="event.stopPropagation()">
+      <div class="relative rounded-2xl overflow-hidden border border-borderSubtle bg-card shadow-2xl max-h-[75vh] flex items-center justify-center">
+        <img id="lightbox-img" src="" alt="" class="max-h-[75vh] w-auto object-contain" />
+      </div>
+      <div class="mt-4 w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+        <div>
+          <h3 id="lightbox-title" class="text-base sm:text-lg font-semibold text-white"></h3>
+          <p id="lightbox-location" class="text-xs text-mutedText"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="lightbox-category" class="px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-borderSubtle text-zinc-300"></span>
+          <span id="lightbox-exif" class="px-2.5 py-1 rounded-full text-xs font-mono bg-card border border-borderSubtle text-mutedText"></span>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="navigateLightbox(1, event)" class="absolute right-3 sm:right-6 z-10 p-3 rounded-full bg-card/90 border border-borderSubtle text-white hover:bg-white hover:text-black transition cursor-pointer" aria-label="Next Photo">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+
+  <!-- Game Detail Modal -->
+  <div id="game-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeGameModal(event)">
+    <div class="bg-card border border-borderSubtle rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl view-transition" onclick="event.stopPropagation()">
+      <div class="relative h-52 w-full bg-zinc-900">
+        <img id="game-modal-img" src="" alt="" class="w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent"></div>
+        <button onclick="closeGameModal(event, true)" class="absolute top-3 right-3 p-2.5 rounded-full bg-black/70 border border-borderSubtle text-white hover:bg-white hover:text-black transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="absolute bottom-3 left-5 right-5 flex items-end justify-between">
+          <div>
+            <span id="game-modal-status" class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white/10 backdrop-blur-md border border-white/15 text-white mb-1.5"></span>
+            <h3 id="game-modal-title" class="text-2xl font-bold text-white tracking-tight"></h3>
+          </div>
+          <span id="game-modal-rating" class="px-2.5 py-1 rounded-xl bg-black/70 border border-borderSubtle font-mono text-xs text-emerald-400 font-semibold"></span>
+        </div>
+      </div>
+      <div class="p-5 space-y-4">
+        <div class="grid grid-cols-3 gap-2.5">
+          <div class="p-3 rounded-xl bg-obsidian border border-borderSubtle">
+            <p class="text-[11px] uppercase tracking-wider text-mutedText">Genre</p>
+            <p id="game-modal-genre" class="text-xs sm:text-sm font-medium text-white mt-0.5 truncate"></p>
+          </div>
+          <div class="p-3 rounded-xl bg-obsidian border border-borderSubtle">
+            <p class="text-[11px] uppercase tracking-wider text-mutedText">Playtime</p>
+            <p id="game-modal-hours" class="text-xs sm:text-sm font-mono font-medium text-white mt-0.5"></p>
+          </div>
+          <div class="p-3 rounded-xl bg-obsidian border border-borderSubtle">
+            <p class="text-[11px] uppercase tracking-wider text-mutedText">Platform</p>
+            <p id="game-modal-platform" class="text-xs sm:text-sm font-medium text-white mt-0.5 truncate"></p>
+          </div>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-mutedText mb-1">Personal Notes & Loadout</p>
+          <p id="game-modal-notes" class="text-sm text-zinc-300 leading-relaxed bg-obsidian p-3.5 rounded-xl border border-borderSubtle"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sleek Simulated Spotify Player Bar (Appears when a song is clicked) -->
+  <div id="spotify-player-bar" class="fixed bottom-4 left-4 right-4 z-40 hidden">
+    <div class="max-w-3xl mx-auto bg-card/95 backdrop-blur-md border border-borderHover rounded-2xl px-4 py-3 shadow-2xl flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <img id="player-cover" src="" alt="" class="w-10 h-10 rounded-lg object-cover border border-borderSubtle shrink-0" />
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="flex items-end gap-0.5 h-3.5 shrink-0">
+              <span class="w-0.5 bg-emerald-400 rounded-full eq-bar-1"></span>
+              <span class="w-0.5 bg-emerald-400 rounded-full eq-bar-2"></span>
+              <span class="w-0.5 bg-emerald-400 rounded-full eq-bar-3"></span>
+            </span>
+            <p id="player-title" class="text-xs sm:text-sm font-semibold text-white truncate"></p>
+          </div>
+          <p id="player-artist" class="text-[11px] text-mutedText truncate"></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <a id="player-spotify-link" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black text-xs font-medium transition">
+          Open Spotify ↗
+        </a>
+        <button onclick="stopSongPreview()" class="p-2 rounded-xl bg-obsidian border border-borderSubtle text-mutedText hover:text-white transition cursor-pointer" aria-label="Close Player">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * SITE_DATA CONFIGURATION (EDIT THIS OBJECT BEFORE DEPLOYING PUBLICLY)
+     * ============================================================================
+     * How to customize your personal website:
+     * 1. Edit `profile` below with your own name, bio, social URLs, and hero photo.
+     * 2. Replace image URLs in `photos`, `games`, `songs`, `manhwa`, and `projects`
+     *    with your own hosted images (e.g., `/images/photo1.jpg` or Unsplash URLs).
+     * 3. Upload this single `index.html` file to GitHub Pages, Vercel, or Netlify!
+     */
+    const SITE_DATA = {
+      profile: {
+        name: "Shan Abdullah",
+        subtitle: "Games, music, photography and everything in between.",
+        heroImage: "Photograhy/DSC01314.jpeg",
+        heroBadge: "SUNSET PHOTOGRAPHY",
+        footerTag: "SHAN.ABDULLAH © 2026",
+        socials: [
+          { name: "Instagram", url: "https://www.instagram.com/_im.shxxn?cplk=MTUxYW84dnVhMjUyYg==", icon: "instagram" },
+          { name: "Discord", url: "https://discord.com/users/1048999818149777468", icon: "discord" }
+        ]
+      },
+
+      // Photography Gallery (First 4 appear in the Home Bento Card)
+      photos: [
+        {
+          id: "p1",
+          title: "Sunset",
+          category: "Nature",
+          location: "Sultan Bathery, Wayanad, Kerala",
+          exif: "35mm · f/1.8 · ISO 400",
+          url: "Photograhy/DSC01314.jpeg"
+        },
+        {
+          id: "p2",
+          title: "Forest Trees",
+          category: "Nature",
+          location: "Sultan Bathery, Wayanad, Kerala",
+          exif: "28mm · f/4.0 · ISO 100",
+          url: "Photograhy/C0002T01.JPG"
+        },
+        {
+          id: "p3",
+          title: "Misty Hills",
+          category: "Nature",
+          location: "Sultan Bathery, Wayanad, Kerala",
+          exif: "50mm · f/2.0 · ISO 100",
+          url: "Photograhy/C0004T01.JPG"
+        },
+        {
+          id: "p4",
+          title: "Vast Greenery",
+          category: "Nature",
+          location: "Sultan Bathery, Wayanad, Kerala",
+          exif: "35mm · f/1.4 · ISO 800",
+          url: "Photograhy/C0017T01.JPG"
+        },
+        {
+          id: "p5",
+          title: "Chilling on the Streets",
+          category: "Street",
+          location: "Mangaluru, India",
+          exif: "24mm · f/2.8 · ISO 100",
+          url: "Photograhy/DSC01170.jpg"
+        },
+        {
+          id: "p6",
+          title: "Midnight Subway Echo",
+          category: "Street",
+          location: "Mangaluru, India",
+          exif: "35mm · f/1.8 · ISO 1600",
+          url: "Photograhy/DSC01360.jpg"
+        },
+        {
+          id: "p7",
+          title: "Above the Horizon",
+          category: "Nature",
+          location: "Sultan Bathery, Wayanad, Kerala",
+          exif: "70mm · f/2.8 · ISO 200",
+          url: "Photograhy/DSC011701.jpg"
+        },
+        {
+          id: "p8",
+          title: "Beyond the Peaks",
+          category: "Nature",
+          location: "Sultan Bathery, Wayanad, Kerala",
+          exif: "50mm · f/1.2 · ISO 1250",
+          url: "Photograhy/DSC01514.jpg"
+        }
+      ],
+
+      // Gaming Library (First 4 appear in the Home Bento Card)
+      games: [
+        {
+          id: "g1",
+          title: "Valorant",
+          genre: "Tactical FPS",
+          status: "Currently Playing",
+          hours: "1500 hrs",
+          platform: "PC",
+          rating: "9.2/10",
+          url: "Games/Valorant.png",
+          notes: "Peak Sliver. Main Hush and Jett. Sensitivity: 800 DPI / 0.32."
+        },
+        {
+          id: "g2",
+          title: "Marvel Rivals",
+          genre: "Hero Shooter",
+          status: "Currently Playing",
+          hours: "115 hrs",
+          platform: "PC",
+          rating: "8.8/10",
+          url: "Games/Rivals.jpg",
+          notes: "Fast-paced team fights with insane verticality. Mostly playing Spider-Man and White Fox."
+        },
+        {
+          id: "g3",
+          title: "CODM",
+          genre: "Battle Royale / Shooter",
+          status: "Favorites",
+          hours: "1,200+ hrs",
+          platform: "Mobile",
+          rating: "10/10",
+          url: "Games/CODM.jpg",
+          notes: "Best mobile shooter experience. Enjoying the new battle royale mode with friends."
+        },
+        {
+          id: "g4",
+          title: "Dead island",
+          genre: "Open World Zombie Survival",
+          status: "Completed",
+          hours: "185 hrs",
+          platform: "PS5 / PC",
+          rating: "9.8/10",
+          url: "Games/dead island.jpg",
+          notes: "Completed the game with a melee-focused build. Loved the open-world exploration and crafting mechanics."
+        },
+        {
+          id: "g5",
+          title: "Fortnite",
+          genre: "Battle Royale",
+          status: "Favorites",
+          hours: "230 hrs",
+          platform: "PC",
+          rating: "9.9/10",
+          url: "Games/Fortnite.jpg",
+          notes: "Enjoyed the fast-paced building mechanics and competitive gameplay. Always up for a duo or squad match with friends."
+        },
+        {
+          id: "g6",
+          title: "Resident Evil",
+          genre: "Survival Horror",
+          status: "Completed",
+          hours: "78 hrs",
+          platform: "PS5",
+          rating: "9.4/10",
+          url: "Games/RDR.jpg",
+          notes: "Loved the intense survival horror experience and the gripping storyline. The graphics and sound design were top-notch."
+        }
+      ],
+
+      // Spotify Rotation (First 4 appear in the Home Bento Card)
+      songs: [
+        {
+          id: "s1",
+          title: "End of Beginning",
+          artist: "Djo",
+          album: "DECIDE",
+          mood: "Late Night Drive",
+          duration: "2:39",
+          spotifyUrl: "https://open.spotify.com/track/3qhlB30KknSejmIvZZLjOD?si=8b5d25fd081d47db",
+          cover: "Music/End.png"
+        },
+        {
+          id: "s2",
+          title: "Delete Ya",
+          artist: "Djo",
+          album: "The Crux",
+          mood: "Synth Noir",
+          duration: "3:23",
+          spotifyUrl: "https://open.spotify.com/track/7tFI5cqfAoR7MIvmbw1qd8?si=77fe4232eb2d42a9",
+          cover: "Music/delete.jpg"
+        },
+        {
+          id: "s3",
+          title: "Basic Being Basic",
+          artist: "Djo",
+          album: "The Crux",
+          mood: "Focus / Coding",
+          duration: "2:38",
+          spotifyUrl: "https://open.spotify.com/track/2jjwQENSoGnYbQEK4acuC6?si=bda8c0cfbfa74098",
+          cover: "Music/delete.jpg"
+        },
+        {
+          id: "s4",
+          title: "Chateau",
+          artist: "Djo",
+          album: "Twenty Twenty",
+          mood: "Chill",
+          duration: "4:32",
+          spotifyUrl: "https://open.spotify.com/track/3vjs2MDHoF9xhylNg6Y9un?si=fa7070a7aad1402d",
+          cover: "Music/chat.jpg"
+        },
+        {
+          id: "s5",
+          title: "Charlie's Garden",
+          artist: "Djo",
+          album: "The Crux",
+          mood: "Photo Editing",
+          duration: "5:45",
+          spotifyUrl: "https://open.spotify.com/track/4kPfzkWY23WgM902kNAQLn?si=124f16c3bf6a446b",
+          cover: "Music/delete.jpg"
+        }
+      ],
+
+      // Manhwa Reading List (First 4 appear in the Home Bento Card)
+      manhwa: [
+        {
+          id: "m1",
+          title: "Solo Leveling",
+          status: "Masterpiece",
+          genre: "Action · Fantasy",
+          chapters: "200 Chapters",
+          rating: "9.8/10",
+          cover: "Manhwa/solo.png",
+          summary: "Sung Jin-Woo's rise from the weakest hunter to the Shadow Monarch. Unmatched art by DUBU."
+        },
+        {
+          id: "m2",
+          title: "Omniscient Reader",
+          status: "Masterpiece",
+          genre: "Apocalypse · Strategy",
+          chapters: "Ch. 235+",
+          rating: "9.9/10",
+          cover: "Manhwa/OMR.jpg",
+          summary: "Kim Dokja navigates an apocalyptic world using his knowledge as the sole reader of an obscure web novel."
+        },
+        {
+          id: "m3",
+          title: "Nano Machine",
+          status: "Reading",
+          genre: "Murim · Sci-Fi",
+          chapters: "Ch. 220+",
+          rating: "9.1/10",
+          cover: "Manhwa/nano.jpg",
+          summary: "Murim martial arts fused with futuristic nanotech injected by a descendant from the future."
+        },
+        {
+          id: "m4",
+          title: "The Beginning After The End",
+          status: "Reading",
+          genre: "Isekai · Magic",
+          chapters: "Ch. 195+",
+          rating: "9.5/10",
+          cover: "Manhwa\\End.jpg",
+          summary: "King Grey reincarnates into a world of magic and monsters, determined to protect those he loves."
+        },
+        {
+          id: "m5",
+          title: "Legend of the Northern Blade",
+          status: "Completed",
+          genre: "Murim · Revenge",
+          chapters: "202 Chapters",
+          rating: "9.7/10",
+          cover: "Manhwa\\blade.jpeg",
+          summary: "Jin Mu-Won rebuilds the fallen Northern Heavenly Sect from the shadows with razor-sharp choreography."
+        }
+      ],
+
+      // Projects & Fitness Showcase
+      projects: [
+    
+        {
+          category: "Fitness",
+          title: "Hybrid Strength & Zone-2 Running",
+          tag: "Training Split",
+          stack: ["Upper / Lower", "25km Weekly", "Sub-20m 5K"],
+          desc: "4-day hypertrophy & strength split paired with 25km weekly endurance running.",
+          metric: "Streak: 48d",
+          url: null
+        },
+        {
+          category: "Fitness",
+          title: "2026 Lifting & Endurance Targets",
+          tag: "Milestones",
+          stack: ["100kg Bench", "140kg Squat", "Half Marathon"],
+          desc: "Tracking progressive overload blocks while keeping resting heart rate under 52 bpm.",
+          metric: "On Track",
+          url: null
+        }
+      ]
+    };
+
+    /* ==========================================================================
+       STATE & HASH ROUTING
+       ========================================================================== */
+    const VALID_VIEWS = ['home', 'photography', 'gaming', 'spotify', 'manhwa', 'projects'];
+    let currentView = getHashView();
+    let photoFilter = 'All';
+    let gameFilter = 'All';
+    let manhwaFilter = 'All';
+    let currentLightboxIndex = 0;
+    let filteredPhotosCache = [];
+    let playingSongId = null;
+
+    function getHashView() {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      return VALID_VIEWS.includes(hash) ? hash : 'home';
+    }
+
+    function navigateTo(view) {
+      currentView = VALID_VIEWS.includes(view) ? view : 'home';
+      const targetHash = currentView === 'home' ? '' : `#${currentView}`;
+      if (window.location.hash !== targetHash) {
+        history.pushState(null, '', targetHash || window.location.pathname);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      renderApp();
+    }
+
+    window.addEventListener('hashchange', () => {
+      currentView = getHashView();
+      renderApp();
+    });
+
+    window.addEventListener('popstate', () => {
+      currentView = getHashView();
+      renderApp();
+    });
+
+    function renderSocialIcon(type) {
+      switch (type) {
+        case 'github':
+          return `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>`;
+        case 'instagram':
+          return `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>`;
+        case 'spotify':
+          return `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
+        case 'discord':
+        default:
+          return `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>`;
+      }
+    }
+
+    // Main Render Dispatcher
+    function renderApp() {
+      document.getElementById('footer-tag').textContent = SITE_DATA.profile.footerTag;
+      const root = document.getElementById('app-root');
+
+      switch (currentView) {
+        case 'photography':
+          root.innerHTML = renderPhotographyPage();
+          break;
+        case 'gaming':
+          root.innerHTML = renderGamingPage();
+          break;
+        case 'spotify':
+          root.innerHTML = renderSpotifyPage();
+          break;
+        case 'manhwa':
+          root.innerHTML = renderManhwaPage();
+          break;
+        case 'projects':
+          root.innerHTML = renderProjectsPage();
+          break;
+        case 'home':
+        default:
+          root.innerHTML = renderHomeView();
+          break;
+      }
+    }
+
+    /* ==========================================================================
+       1. HOME VIEW (PUBLIC BENTO GRID SHOWCASE)
+       ========================================================================== */
+    function renderHomeView() {
+      const { profile, photos, games, songs, manhwa } = SITE_DATA;
+      const previewGames = games.slice(0, 4);
+      const previewSongs = songs.slice(0, 4);
+      const previewPhotos = photos.slice(0, 4);
+      const previewManhwa = manhwa.slice(0, 4);
+
+      return `
+        <div class="view-transition space-y-5">
+          
+          <!-- Header Section with Subtle Public Social Links -->
+          <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-2">
+            <div>
+              <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+                Hey, I'm ${escapeHtml(profile.name)}.
+              </h1>
+              <p class="text-sm sm:text-base text-mutedText mt-2">
+                ${escapeHtml(profile.subtitle)}
+              </p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              ${profile.socials.map(social => `
+                <a 
+                  href="${escapeHtml(social.url)}" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  aria-label="${escapeHtml(social.name)}"
+                  title="${escapeHtml(social.name)}"
+                  class="p-2.5 rounded-xl bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover text-mutedText hover:text-white transition"
+                >
+                  ${renderSocialIcon(social.icon)}
+                </a>
+              `).join('')}
+            </div>
+          </header>
+
+          <!-- Featured Hero Banner -->
+          <section 
+            onclick="navigateTo('photography')" 
+            class="group relative w-full h-56 sm:h-72 md:h-80 rounded-2xl overflow-hidden border border-borderSubtle hover:border-borderHover bg-card cursor-pointer transition-colors"
+          >
+            <img 
+              src="${escapeHtml(profile.heroImage)}" 
+              alt="Featured Photography" 
+              onerror="this.src='https://placehold.co/1200x500/111111/888888?text=Featured+Architecture'"
+              class="w-full h-full object-cover grayscale contrast-125 group-hover:scale-[1.02] transition-transform duration-500 ease-out"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+            
+            <!-- Subtle bottom-left pill badge -->
+            <div class="absolute bottom-3.5 left-3.5 px-3 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/15 text-xs font-medium text-zinc-200">
+              ${escapeHtml(profile.heroBadge)}
+            </div>
+
+            <!-- Hover hint pill on top-right -->
+            <div class="absolute top-3.5 right-3.5 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/15 text-xs text-white">
+              Open Gallery ↗
+            </div>
+          </section>
+
+          <!-- 2x2 Bento Grid -->
+          <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Card 1: GAMING -->
+            <div 
+              onclick="navigateTo('gaming')" 
+              class="group bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+            >
+              <div class="flex items-center justify-between mb-3.5">
+                <h2 class="text-sm font-bold tracking-wider uppercase text-white">GAMING</h2>
+                <span class="text-xs font-mono text-mutedText group-hover:text-white transition-colors">${games.length} titles</span>
+              </div>
+
+              <div class="grid grid-cols-4 gap-2.5">
+                ${previewGames.map(game => `
+                  <div class="aspect-square rounded-xl overflow-hidden bg-obsidian border border-borderSubtle/80">
+                    <img 
+                      src="${escapeHtml(game.url)}" 
+                      alt="${escapeHtml(game.title)}" 
+                      onerror="this.src='https://placehold.co/300x300/18181b/888888?text=Game'"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="mt-3.5 pt-1 flex items-center justify-between text-xs text-mutedText group-hover:text-zinc-200 transition-colors">
+                <span>${games.length} games · <span class="underline decoration-borderHover underline-offset-4 group-hover:text-white">View all ↗</span></span>
+              </div>
+            </div>
+
+            <!-- Card 2: SPOTIFY -->
+            <div 
+              onclick="navigateTo('spotify')" 
+              class="group bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+            >
+              <div class="flex items-center justify-between mb-3.5">
+                <h2 class="text-sm font-bold tracking-wider uppercase text-white">SPOTIFY</h2>
+                <span class="inline-flex items-center gap-1.5 text-xs text-emerald-400/90 font-mono">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Heavy Rotation
+                </span>
+              </div>
+
+              <div class="grid grid-cols-4 gap-2.5">
+                ${previewSongs.map(song => `
+                  <div class="aspect-square rounded-xl overflow-hidden bg-obsidian border border-borderSubtle/80">
+                    <img 
+                      src="${escapeHtml(song.cover)}" 
+                      alt="${escapeHtml(song.title)}" 
+                      onerror="this.src='https://placehold.co/300x300/18181b/888888?text=Album'"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="mt-3.5 pt-1 flex items-center justify-between text-xs text-mutedText group-hover:text-zinc-200 transition-colors">
+                <span>Favourite songs · <span class="underline decoration-borderHover underline-offset-4 group-hover:text-white">View all ↗</span></span>
+              </div>
+            </div>
+
+            <!-- Card 3: PHOTOGRAPHY -->
+            <div 
+              onclick="navigateTo('photography')" 
+              class="group bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+            >
+              <div class="flex items-center justify-between mb-3.5">
+                <h2 class="text-sm font-bold tracking-wider uppercase text-white">PHOTOGRAPHY</h2>
+                <span class="text-xs font-mono text-mutedText group-hover:text-white transition-colors">35mm / RAW</span>
+              </div>
+
+              <div class="grid grid-cols-4 gap-2.5">
+                ${previewPhotos.map(photo => `
+                  <div class="aspect-square rounded-xl overflow-hidden bg-obsidian border border-borderSubtle/80">
+                    <img 
+                      src="${escapeHtml(photo.url)}" 
+                      alt="${escapeHtml(photo.title)}" 
+                      onerror="this.src='https://placehold.co/300x300/18181b/888888?text=Photo'"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="mt-3.5 pt-1 flex items-center justify-between text-xs text-mutedText group-hover:text-zinc-200 transition-colors">
+                <span>${photos.length} photos · <span class="underline decoration-borderHover underline-offset-4 group-hover:text-white">View gallery ↗</span></span>
+              </div>
+            </div>
+
+            <!-- Card 4: MANHWA -->
+            <div 
+              onclick="navigateTo('manhwa')" 
+              class="group bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+            >
+              <div class="flex items-center justify-between mb-3.5">
+                <h2 class="text-sm font-bold tracking-wider uppercase text-white">MANHWA</h2>
+                <span class="text-xs font-mono text-mutedText group-hover:text-white transition-colors">Library</span>
+              </div>
+
+              <div class="grid grid-cols-4 gap-2.5">
+                ${previewManhwa.map(item => `
+                  <div class="aspect-[3/4] rounded-xl overflow-hidden bg-obsidian border border-borderSubtle/80">
+                    <img 
+                      src="${escapeHtml(item.cover)}" 
+                      alt="${escapeHtml(item.title)}" 
+                      onerror="this.src='https://placehold.co/300x400/18181b/888888?text=Cover'"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="mt-3.5 pt-1 flex items-center justify-between text-xs text-mutedText group-hover:text-zinc-200 transition-colors">
+                <span>Reading list · <span class="underline decoration-borderHover underline-offset-4 group-hover:text-white">View all ↗</span></span>
+              </div>
+            </div>
+
+          </section>
+
+          <!-- Bottom Wide Bar: PROJECTS & FITNESS -->
+          <section 
+            onclick="navigateTo('projects')" 
+            class="group bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover rounded-2xl px-5 py-4 transition-all duration-200 cursor-pointer flex items-center justify-between"
+          >
+            <span class="text-sm font-bold tracking-wider uppercase text-white">PROJECTS & FITNESS</span>
+            <span class="text-xs font-medium tracking-wider uppercase text-mutedText group-hover:text-white transition-colors">EXPLORE ↗</span>
+          </section>
+
+        </div>
+      `;
+    }
+
+    /* ==========================================================================
+       2. EXPANDED PHOTOGRAPHY GALLERY SUB-PAGE (#photography)
+       ========================================================================== */
+    function renderPhotographyPage() {
+      const categories = ['All', 'Architecture', 'Street', 'Nature', 'Night'];
+      const filtered = photoFilter === 'All' 
+        ? SITE_DATA.photos 
+        : SITE_DATA.photos.filter(p => p.category === photoFilter);
+      
+      filteredPhotosCache = filtered;
+
+      return `
+        <div class="view-transition space-y-6">
+          <!-- Sticky Top Navigation Bar -->
+          <div class="sticky top-0 z-30 bg-obsidian/90 backdrop-blur-md flex items-center justify-between gap-4 py-4 border-b border-borderSubtle">
+            <div class="flex items-center gap-3">
+              <button 
+                onclick="navigateTo('home')" 
+                class="px-3.5 py-2 rounded-xl bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover text-xs font-medium text-zinc-200 hover:text-white transition cursor-pointer"
+              >
+                ← Back
+              </button>
+              <div>
+                <h1 class="text-lg sm:text-xl font-bold tracking-wider uppercase text-white">PHOTOGRAPHY</h1>
+                <p class="text-xs text-mutedText hidden sm:block">Click any frame to inspect full resolution & EXIF data</p>
+              </div>
+            </div>
+
+            <span class="px-3 py-1 rounded-full bg-card border border-borderSubtle font-mono text-xs text-mutedText">
+              ${filtered.length} frames
+            </span>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div class="flex flex-wrap items-center gap-2">
+            ${categories.map(cat => {
+              const active = photoFilter === cat;
+              return `
+                <button 
+                  onclick="setPhotoFilter('${cat}')" 
+                  class="px-3.5 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
+                    active 
+                      ? 'bg-white text-black font-semibold' 
+                      : 'bg-card border border-borderSubtle text-mutedText hover:text-white hover:border-borderHover'
+                  }"
+                >
+                  ${cat}
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Responsive Photo Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${filtered.map((photo, idx) => `
+              <div 
+                onclick="openLightbox(${idx})" 
+                class="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-card border border-borderSubtle hover:border-borderHover cursor-pointer"
+              >
+                <img 
+                  src="${escapeHtml(photo.url)}" 
+                  alt="${escapeHtml(photo.title)}" 
+                  onerror="this.src='https://placehold.co/800x600/111111/888888?text=Photo'"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between p-4">
+                  <div class="flex justify-between items-start">
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/60 backdrop-blur-md border border-white/15 text-zinc-200">
+                      ${escapeHtml(photo.category)}
+                    </span>
+                    <span class="p-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                    </span>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-semibold text-white">${escapeHtml(photo.title)}</h3>
+                    <p class="text-[11px] text-zinc-300 mt-0.5">${escapeHtml(photo.location)}</p>
+                    <p class="text-[10px] font-mono text-mutedText mt-1">${escapeHtml(photo.exif)}</p>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setPhotoFilter(cat) {
+      photoFilter = cat;
+      renderApp();
+    }
+
+    /* ==========================================================================
+       3. EXPANDED GAMING LIBRARY SUB-PAGE (#gaming)
+       ========================================================================== */
+    function renderGamingPage() {
+      const statuses = ['All Games', 'Currently Playing', 'Favorites', 'Completed'];
+      const filtered = gameFilter === 'All Games' || gameFilter === 'All'
+        ? SITE_DATA.games 
+        : SITE_DATA.games.filter(g => g.status === gameFilter);
+
+      return `
+        <div class="view-transition space-y-6">
+          <!-- Sticky Top Navigation Bar -->
+          <div class="sticky top-0 z-30 bg-obsidian/90 backdrop-blur-md flex items-center justify-between gap-4 py-4 border-b border-borderSubtle">
+            <div class="flex items-center gap-3">
+              <button 
+                onclick="navigateTo('home')" 
+                class="px-3.5 py-2 rounded-xl bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover text-xs font-medium text-zinc-200 hover:text-white transition cursor-pointer"
+              >
+                ← Back
+              </button>
+              <div>
+                <h1 class="text-lg sm:text-xl font-bold tracking-wider uppercase text-white">GAMING</h1>
+                <p class="text-xs text-mutedText hidden sm:block">Click any game card to view playtime stats & loadout notes</p>
+              </div>
+            </div>
+
+            <span class="px-3 py-1 rounded-full bg-card border border-borderSubtle font-mono text-xs text-mutedText">
+              ${filtered.length} titles
+            </span>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex flex-wrap items-center gap-2">
+            ${statuses.map(st => {
+              const active = (gameFilter === 'All' && st === 'All Games') || gameFilter === st;
+              return `
+                <button 
+                  onclick="setGameFilter('${st}')" 
+                  class="px-3.5 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
+                    active 
+                      ? 'bg-white text-black font-semibold' 
+                      : 'bg-card border border-borderSubtle text-mutedText hover:text-white hover:border-borderHover'
+                  }"
+                >
+                  ${st}
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Games Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${filtered.map(game => `
+              <div 
+                onclick="openGameModal('${game.id}')" 
+                class="group bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover rounded-2xl overflow-hidden transition-all cursor-pointer flex flex-col justify-between"
+              >
+                <div class="relative aspect-[16/10] w-full overflow-hidden bg-obsidian">
+                  <img 
+                    src="${escapeHtml(game.url)}" 
+                    alt="${escapeHtml(game.title)}" 
+                    onerror="this.src='https://placehold.co/600x400/111111/888888?text=Game+Cover'"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/75 backdrop-blur-md border border-white/15 text-zinc-200">
+                      ${escapeHtml(game.status)}
+                    </span>
+                  </div>
+                  <div class="absolute top-2.5 right-2.5">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-mono bg-black/75 backdrop-blur-md border border-white/15 text-zinc-300">
+                      ${escapeHtml(game.platform)}
+                    </span>
+                  </div>
+                  <div class="absolute bottom-2.5 right-2.5">
+                    <span class="px-2 py-0.5 rounded-lg text-[11px] font-mono font-semibold bg-black/80 border border-borderSubtle text-emerald-400">
+                      ${escapeHtml(game.rating)}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-2">
+                      <h3 class="text-base font-bold text-white group-hover:text-zinc-100">${escapeHtml(game.title)}</h3>
+                      <span class="text-xs font-mono text-mutedText">${escapeHtml(game.hours)}</span>
+                    </div>
+                    <p class="text-xs text-mutedText mt-0.5">${escapeHtml(game.genre)}</p>
+                  </div>
+                  <p class="text-xs text-zinc-400 mt-3 line-clamp-2 leading-relaxed">
+                    ${escapeHtml(game.notes)}
+                  </p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setGameFilter(status) {
+      gameFilter = status;
+      renderApp();
+    }
+
+    /* ==========================================================================
+       4. EXPANDED SPOTIFY / MUSIC SUB-PAGE (#spotify)
+       ========================================================================== */
+    function renderSpotifyPage() {
+      return `
+        <div class="view-transition space-y-6">
+          <div class="sticky top-0 z-30 bg-obsidian/90 backdrop-blur-md flex items-center justify-between gap-4 py-4 border-b border-borderSubtle">
+            <div class="flex items-center gap-3">
+              <button 
+                onclick="navigateTo('home')" 
+                class="px-3.5 py-2 rounded-xl bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover text-xs font-medium text-zinc-200 hover:text-white transition cursor-pointer"
+              >
+                ← Back
+              </button>
+              <div>
+                <h1 class="text-lg sm:text-xl font-bold tracking-wider uppercase text-white">SPOTIFY & ROTATION</h1>
+                <p class="text-xs text-mutedText hidden sm:block">Click any track to preview in the player bar</p>
+              </div>
+            </div>
+            <span class="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+              On Repeat
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            ${SITE_DATA.songs.map((song, idx) => {
+              const isPlaying = playingSongId === song.id;
+              return `
+                <div 
+                  onclick="toggleSongPreview('${song.id}')" 
+                  class="group bg-card hover:bg-cardHover border ${isPlaying ? 'border-emerald-500/50' : 'border-borderSubtle hover:border-borderHover'} rounded-2xl p-4 flex items-center justify-between gap-4 transition cursor-pointer"
+                >
+                  <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="relative w-14 h-14 rounded-xl overflow-hidden border border-borderSubtle shrink-0">
+                      <img 
+                        src="${escapeHtml(song.cover)}" 
+                        alt="${escapeHtml(song.title)}" 
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div class="absolute inset-0 bg-black/40 flex items-center justify-center ${isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity">
+                        <span class="text-xs text-white font-bold">${isPlaying ? '❚❚' : '▶'}</span>
+                      </div>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="font-mono text-[11px] text-mutedText">0${idx + 1}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] bg-obsidian border border-borderSubtle text-zinc-300">${escapeHtml(song.mood)}</span>
+                      </div>
+                      <h3 class="text-sm font-semibold ${isPlaying ? 'text-emerald-400' : 'text-white'} truncate mt-1">${escapeHtml(song.title)}</h3>
+                      <p class="text-xs text-mutedText truncate">${escapeHtml(song.artist)} · ${escapeHtml(song.album)}</p>
+                    </div>
+                  </div>
+                  <span class="text-xs font-mono text-mutedText shrink-0">${escapeHtml(song.duration)}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleSongPreview(songId) {
+      const playerBar = document.getElementById('spotify-player-bar');
+      if (playingSongId === songId) {
+        stopSongPreview();
+        return;
+      }
+      playingSongId = songId;
+      const song = SITE_DATA.songs.find(s => s.id === songId);
+      if (song) {
+        document.getElementById('player-cover').src = song.cover;
+        document.getElementById('player-title').textContent = song.title;
+        document.getElementById('player-artist').textContent = `${song.artist} — ${song.album}`;
+        document.getElementById('player-spotify-link').href = song.spotifyUrl || 'https://open.spotify.com';
+        playerBar.classList.remove('hidden');
+      }
+      renderApp();
+    }
+
+    function stopSongPreview() {
+      playingSongId = null;
+      document.getElementById('spotify-player-bar').classList.add('hidden');
+      renderApp();
+    }
+
+    /* ==========================================================================
+       5. EXPANDED MANHWA / READING LIST SUB-PAGE (#manhwa)
+       ========================================================================== */
+    function renderManhwaPage() {
+      const tabs = ['All', 'Reading', 'Completed', 'Masterpiece'];
+      const filtered = manhwaFilter === 'All'
+        ? SITE_DATA.manhwa
+        : SITE_DATA.manhwa.filter(m => m.status === manhwaFilter);
+
+      return `
+        <div class="view-transition space-y-6">
+          <div class="sticky top-0 z-30 bg-obsidian/90 backdrop-blur-md flex items-center justify-between gap-4 py-4 border-b border-borderSubtle">
+            <div class="flex items-center gap-3">
+              <button 
+                onclick="navigateTo('home')" 
+                class="px-3.5 py-2 rounded-xl bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover text-xs font-medium text-zinc-200 hover:text-white transition cursor-pointer"
+              >
+                ← Back
+              </button>
+              <div>
+                <h1 class="text-lg sm:text-xl font-bold tracking-wider uppercase text-white">MANHWA & READING LIST</h1>
+                <p class="text-xs text-mutedText hidden sm:block">All-time favorites and weekly chapters</p>
+              </div>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-card border border-borderSubtle font-mono text-xs text-mutedText">
+              ${filtered.length} series
+            </span>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex flex-wrap items-center gap-2">
+            ${tabs.map(tab => {
+              const active = manhwaFilter === tab;
+              return `
+                <button 
+                  onclick="setManhwaFilter('${tab}')" 
+                  class="px-3.5 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
+                    active 
+                      ? 'bg-white text-black font-semibold' 
+                      : 'bg-card border border-borderSubtle text-mutedText hover:text-white hover:border-borderHover'
+                  }"
+                >
+                  ${tab}
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            ${filtered.map(item => `
+              <div class="bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover rounded-2xl p-4 flex gap-4 transition">
+                <img 
+                  src="${escapeHtml(item.cover)}" 
+                  alt="${escapeHtml(item.title)}" 
+                  class="w-24 h-36 rounded-xl object-cover border border-borderSubtle shrink-0"
+                />
+                <div class="flex flex-col justify-between min-w-0">
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-obsidian border border-borderSubtle text-zinc-300">
+                        ${escapeHtml(item.status)}
+                      </span>
+                      <span class="text-[11px] font-mono text-emerald-400">${escapeHtml(item.rating)}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white mt-1.5">${escapeHtml(item.title)}</h3>
+                    <p class="text-[11px] text-mutedText mt-0.5">${escapeHtml(item.genre)}</p>
+                    <p class="text-xs text-zinc-400 mt-2 line-clamp-3 leading-relaxed">${escapeHtml(item.summary)}</p>
+                  </div>
+                  <p class="text-[11px] font-mono text-mutedText mt-2">${escapeHtml(item.chapters)}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setManhwaFilter(tab) {
+      manhwaFilter = tab;
+      renderApp();
+    }
+
+    /* ==========================================================================
+       6. EXPANDED PROJECTS & FITNESS SUB-PAGE (#projects)
+       ========================================================================== */
+    function renderProjectsPage() {
+      const projectsList = SITE_DATA.projects.filter(p => p.category === 'Project');
+      const fitnessList = SITE_DATA.projects.filter(p => p.category === 'Fitness');
+
+      return `
+        <div class="view-transition space-y-8">
+          <div class="sticky top-0 z-30 bg-obsidian/90 backdrop-blur-md flex items-center justify-between gap-4 py-4 border-b border-borderSubtle">
+            <div class="flex items-center gap-3">
+              <button 
+                onclick="navigateTo('home')" 
+                class="px-3.5 py-2 rounded-xl bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover text-xs font-medium text-zinc-200 hover:text-white transition cursor-pointer"
+              >
+                ← Back
+              </button>
+              <div>
+                <h1 class="text-lg sm:text-xl font-bold tracking-wider uppercase text-white">PROJECTS & FITNESS</h1>
+                <p class="text-xs text-mutedText hidden sm:block">Side builds, tools, and personal training milestones</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coding & Creative Projects Section -->
+          <div class="space-y-3">
+            <h2 class="text-xs font-bold tracking-widest uppercase text-mutedText">SOFTWARE & HARDWARE BUILDS</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              ${projectsList.map(proj => `
+                <div class="bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover rounded-2xl p-5 transition flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-obsidian border border-borderSubtle text-zinc-300">
+                        ${escapeHtml(proj.tag)}
+                      </span>
+                      <span class="text-xs font-mono text-emerald-400">${escapeHtml(proj.metric)}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white mt-3">${escapeHtml(proj.title)}</h3>
+                    <p class="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed">${escapeHtml(proj.desc)}</p>
+                  </div>
+                  <div class="mt-4 pt-3 border-t border-borderSubtle/60 flex items-center justify-between gap-2">
+                    <div class="flex flex-wrap gap-1.5">
+                      ${(proj.stack || []).map(tech => `
+                        <span class="px-2 py-0.5 rounded-md bg-obsidian border border-borderSubtle font-mono text-[10px] text-zinc-300">${escapeHtml(tech)}</span>
+                      `).join('')}
+                    </div>
+                    ${proj.url ? `<a href="${escapeHtml(proj.url)}" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-white hover:underline shrink-0">View ↗</a>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Fitness Milestones Section -->
+          <div class="space-y-3">
+            <h2 class="text-xs font-bold tracking-widest uppercase text-mutedText">FITNESS & TRAINING</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              ${fitnessList.map(fit => `
+                <div class="bg-card hover:bg-cardHover border border-borderSubtle hover:border-borderHover rounded-2xl p-5 transition flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-obsidian border border-borderSubtle text-zinc-300">
+                        ${escapeHtml(fit.tag)}
+                      </span>
+                      <span class="text-xs font-mono text-emerald-400">${escapeHtml(fit.metric)}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white mt-3">${escapeHtml(fit.title)}</h3>
+                    <p class="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed">${escapeHtml(fit.desc)}</p>
+                  </div>
+                  <div class="mt-4 pt-3 border-t border-borderSubtle/60 flex flex-wrap gap-1.5">
+                    ${(fit.stack || []).map(pill => `
+                      <span class="px-2 py-0.5 rounded-md bg-obsidian border border-borderSubtle font-mono text-[10px] text-zinc-300">${escapeHtml(pill)}</span>
+                    `).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==========================================================================
+       LIGHTBOX & GAME DETAIL MODALS
+       ========================================================================== */
+    function openLightbox(index) {
+      currentLightboxIndex = index;
+      updateLightboxContent();
+      document.getElementById('lightbox-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function updateLightboxContent() {
+      const photo = filteredPhotosCache[currentLightboxIndex];
+      if (!photo) return;
+      document.getElementById('lightbox-img').src = photo.url;
+      document.getElementById('lightbox-title').textContent = photo.title;
+      document.getElementById('lightbox-location').textContent = photo.location;
+      document.getElementById('lightbox-category').textContent = photo.category;
+      document.getElementById('lightbox-exif').textContent = photo.exif;
+    }
+
+    function navigateLightbox(dir, event) {
+      if (event) event.stopPropagation();
+      if (!filteredPhotosCache.length) return;
+      currentLightboxIndex = (currentLightboxIndex + dir + filteredPhotosCache.length) % filteredPhotosCache.length;
+      updateLightboxContent();
+    }
+
+    function closeLightbox(event, force = false) {
+      if (force || event.target.id === 'lightbox-modal') {
+        document.getElementById('lightbox-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    }
+
+    function openGameModal(gameId) {
+      const game = SITE_DATA.games.find(g => g.id === gameId);
+      if (!game) return;
+      document.getElementById('game-modal-img').src = game.url;
+      document.getElementById('game-modal-title').textContent = game.title;
+      document.getElementById('game-modal-status').textContent = game.status;
+      document.getElementById('game-modal-rating').textContent = game.rating;
+      document.getElementById('game-modal-genre').textContent = game.genre;
+      document.getElementById('game-modal-hours').textContent = game.hours;
+      document.getElementById('game-modal-platform').textContent = game.platform || 'PC';
+      document.getElementById('game-modal-notes').textContent = game.notes || 'No notes added yet.';
+      document.getElementById('game-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeGameModal(event, force = false) {
+      if (force || event.target.id === 'game-modal') {
+        document.getElementById('game-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    }
+
+    // Keyboard Shortcuts (ESC to close modals, Left/Right arrows in Lightbox)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeLightbox(null, true);
+        closeGameModal(null, true);
+      } else if (!document.getElementById('lightbox-modal').classList.contains('hidden')) {
+        if (e.key === 'ArrowRight') navigateLightbox(1);
+        if (e.key === 'ArrowLeft') navigateLightbox(-1);
+      }
+    });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Initial Render
+    window.addEventListener('DOMContentLoaded', renderApp);
+  </script>
+</body>
+</html>
