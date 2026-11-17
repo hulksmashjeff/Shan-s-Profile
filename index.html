@@ -80,6 +80,75 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #3f3f46;
     }
+    *, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+    background: #0f0f0f;
+    color: #ffffff;
+}
+
+/* Lock ALL icons / SVGs so they never blow up */
+svg {
+    width: 22px !important;
+    height: 22px !important;
+    max-width: 22px !important;
+    max-height: 22px !important;
+    flex-shrink: 0;
+}
+
+.header-socials img,
+.social-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+/* Keep bento thumbnails compact instead of full-screen tall */
+.bento-card img:not(.social-icon),
+.card-thumb,
+.card-bg {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+    .container {
+        width: 100%;
+        padding: 0 16px;
+    }
+
+    header h1 {
+        font-size: 1.75rem;
+        line-height: 1.15;
+    }
+
+    .bento-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .bento-card {
+        padding: 16px;
+        min-height: auto;
+    }
+
+    .bento-card img:not(.social-icon),
+    .card-thumb,
+    .card-bg {
+        height: 140px;
+    }
+}
   </style>
 </head>
 <body class="bg-obsidian text-white min-h-screen selection:bg-white selection:text-black">
